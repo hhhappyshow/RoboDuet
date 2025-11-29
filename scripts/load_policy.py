@@ -76,18 +76,30 @@ def load_env(logdir, wrapper, headless=False, device='cuda:0'):
         # print(cfg.keys())
 
         for key, value in cfg.items():
-            if hasattr(Cfg, key):
-                if key in ["dog", "arm", "hybrid"]:
+            # 只处理在 Cfg 中已存在的字段，避免意外键
+            if not hasattr(Cfg, key):
+                continue
 
-                    for key2, value2 in cfg[key].items():
-                        if not isinstance(cfg[key][key2], dict):
-                            setattr(getattr(Cfg, key), key2, value2)
-                        else:
-                            for key3, value3 in cfg[key][key2].items():
-                                setattr(getattr(getattr(Cfg, key), key2), key3, value3)
-            
+            # 这几个是嵌套结构（dog/arm/hybrid），期望是 dict
+            if key in ["dog", "arm", "hybrid"]:
+                if not isinstance(cfg[key], dict):
+                    # 训练时不太可能出现，但为了鲁棒性，直接覆盖
+                    setattr(Cfg, key, cfg[key])
+                    continue
+
+                for key2, value2 in cfg[key].items():
+                    if not isinstance(value2, dict):
+                        setattr(getattr(Cfg, key), key2, value2)
+                    else:
+                        for key3, value3 in value2.items():
+                            setattr(getattr(getattr(Cfg, key), key2), key3, value3)
+            else:
+                # 其它字段如果是标量（如 use_rot6d 等），直接赋值；
+                # 如果是 dict（如 env/commands 等），展开到子字段
+                if not isinstance(value, dict):
+                    setattr(Cfg, key, value)
                 else:
-                    for key2, value2 in cfg[key].items():
+                    for key2, value2 in value.items():
                         setattr(getattr(Cfg, key), key2, value2)
 
     Cfg.terrain.mesh_type = "plane"

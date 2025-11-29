@@ -5,6 +5,7 @@ import torch
 
 class Cfg(PrefixProto, cli=False):
     
+    use_rot6d = False   # 新增：默认不使用 rot6d 姿态表示，由训练脚本/加载脚本覆盖
     class hybrid(PrefixProto, cli=False):
         num_actions = 18
         plan_vel = False
