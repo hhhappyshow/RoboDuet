@@ -7,7 +7,7 @@ import argparse
 from go1_gym.envs.automatic.legged_robot_config import Cfg
 from go1_gym.envs.go1.go1_config import config_go1
 from go1_gym.envs.go1.wtw_config import config_wtw
-from go1_gym.envs.go1.asset_config import config_asset
+from go1_gym.envs.go1.asset_config import config_asset, config_go2_airbot
 
 import wandb
 import os
@@ -52,7 +52,12 @@ def train_go1(arg):
     
     config_go1(Cfg)
     config_wtw(Cfg)
-    config_asset(Cfg)
+    
+    # 根据机器人类型选择配置
+    if args.robot == "go2_airbot":
+        config_go2_airbot(Cfg)
+    else:
+        config_asset(Cfg)
     
     Cfg.commands.distributional_commands = False
     Cfg.domain_rand.lag_timesteps = 6
@@ -148,10 +153,14 @@ def train_go1(arg):
     global_switch.init_sigmoid_lr()
     # global_switch.init_linear_lr()
     
+    # URDF 文件路径已在各自的 config 函数中设置
+    # 如果需要覆盖，可以在这里设置
     if args.robot == "go1":
         Cfg.asset.file = '{MINI_GYM_ROOT_DIR}/resources/robots/arx5p2Go1/urdf/arx5p2Go1.urdf'
     elif args.robot == "go2":
         Cfg.asset.file = '{MINI_GYM_ROOT_DIR}/resources/robots/go2/urdf/arx5go2.urdf'
+    elif args.robot == "go2_airbot":
+        Cfg.asset.file = '{MINI_GYM_ROOT_DIR}/resources/robots/go2_airbot/urdf/go2_airbot.urdf'
     
     if args.headless:
         RunnerArgs.log_video = False
@@ -231,7 +240,7 @@ if __name__ == '__main__':
     parser.add_argument('--tags', nargs='+', default=[])
     parser.add_argument('--notes', type=str, default=None)
     parser.add_argument('--seed', type=int, default=-1)
-    parser.add_argument('--robot', type=str, default="go1", choices=["go1", "go2"])
+    parser.add_argument('--robot', type=str, default="go1", choices=["go1", "go2", "go2_airbot"])
     parser.add_argument('--wo_two_stage', action='store_true', default=False)
     parser.add_argument('--use_rot6d', action='store_true', default=False)
 
