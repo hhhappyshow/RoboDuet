@@ -7,7 +7,7 @@ import argparse
 from go1_gym.envs.automatic.legged_robot_config import Cfg
 from go1_gym.envs.go1.go1_config import config_go1
 from go1_gym.envs.go1.wtw_config import config_wtw
-from go1_gym.envs.go1.asset_config import config_asset, config_go2_airbot
+from go1_gym.envs.go1.asset_config import config_asset, config_go2_airbot_asset
 
 import wandb
 import os
@@ -55,7 +55,7 @@ def train_go1(arg):
     
     # 根据机器人类型选择配置
     if args.robot == "go2_airbot":
-        config_go2_airbot(Cfg)
+        config_go2_airbot_asset(Cfg)
     else:
         config_asset(Cfg)
     

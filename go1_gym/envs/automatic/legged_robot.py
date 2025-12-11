@@ -725,11 +725,63 @@ class LeggedRobot(BaseTask):
                 self.dof_pos_limits[i, 1] = m + 0.5 * r * self.cfg.rewards.soft_dof_pos_limit
 
             if self.cfg.control.control_type == 'M':
-                for i in range(8):
-                    joint_name = f"zarx_j{i+1}"
-                    joint_idx = self.num_actions_loco + i
-                    props[joint_idx]['stiffness'] = self.cfg.arm.control.stiffness_arm[joint_name]
-                    props[joint_idx]['damping'] = self.cfg.arm.control.damping_arm[joint_name]
+                # 确保 dof_names 已初始化
+                if not hasattr(self, 'dof_names') or self.dof_names is None:
+                    # 如果 dof_names 未初始化，使用旧的硬编码方式作为后备
+                    for i in range(min(8, self.num_actions_arm)):
+                        joint_name = f"zarx_j{i+1}"
+                        joint_idx = self.num_actions_loco + i
+                        if joint_name in self.cfg.arm.control.stiffness_arm:
+                            props[joint_idx]['stiffness'] = self.cfg.arm.control.stiffness_arm[joint_name]
+                            props[joint_idx]['damping'] = self.cfg.arm.control.damping_arm[joint_name]
+                else:
+                    # 遍历所有机械臂关节，使用实际的关节名称进行匹配
+                    for i in range(self.num_actions_arm):
+                        joint_idx = self.num_actions_loco + i
+                        if joint_idx >= len(self.dof_names):
+                            continue
+                        
+                        actual_joint_name = self.dof_names[joint_idx]
+                    
+                    # 尝试匹配配置中的关节名称
+                    matched_stiffness = None
+                    matched_damping = None
+                    
+                    # 首先尝试精确匹配
+                    if actual_joint_name in self.cfg.arm.control.stiffness_arm:
+                        # assert False
+                        matched_stiffness = self.cfg.arm.control.stiffness_arm[actual_joint_name]
+                        matched_damping = self.cfg.arm.control.damping_arm[actual_joint_name]
+                    else:
+                        # 尝试部分匹配（例如 "arm_joint00" 匹配 "arm_joint"）
+                        for config_key in self.cfg.arm.control.stiffness_arm.keys():
+                            if config_key in actual_joint_name or actual_joint_name in config_key:
+                                matched_stiffness = self.cfg.arm.control.stiffness_arm[config_key]
+                                matched_damping = self.cfg.arm.control.damping_arm[config_key]
+                                break
+                    
+                    # 如果仍然没有匹配到，使用默认值
+                    if matched_stiffness is None:
+                        # 尝试使用通用键
+                        if "arm" in self.cfg.arm.control.stiffness_arm:
+                            matched_stiffness = self.cfg.arm.control.stiffness_arm["arm"]
+                            matched_damping = self.cfg.arm.control.damping_arm["arm"]
+                        elif "arm_joint" in self.cfg.arm.control.stiffness_arm:
+                            matched_stiffness = self.cfg.arm.control.stiffness_arm["arm_joint"]
+                            matched_damping = self.cfg.arm.control.damping_arm["arm_joint"]
+                        else:
+                            # 使用第一个可用的配置值作为默认值
+                            if self.cfg.arm.control.stiffness_arm:
+                                default_key = list(self.cfg.arm.control.stiffness_arm.keys())[0]
+                                matched_stiffness = self.cfg.arm.control.stiffness_arm[default_key]
+                                matched_damping = self.cfg.arm.control.damping_arm[default_key]
+                            else:
+                                print(f"Warning: No stiffness/damping config found for joint {actual_joint_name}, using default values")
+                                matched_stiffness = 50.0
+                                matched_damping = 20.0
+                    
+                    props[joint_idx]['stiffness'] = matched_stiffness
+                    props[joint_idx]['damping'] = matched_damping
 
             print(props)
         
@@ -1677,10 +1729,21 @@ class LeggedRobot(BaseTask):
                                                                                         self.actor_handles[0],
                                                                                         hip_body_names[i])
         
+        # 动态查找末端执行器索引
+        if self.cfg.asset.end_effector_name:
+            # 使用配置中的 end_effector_name 动态查找
+            self.ee_idx = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0],
+                                                                 self.cfg.asset.end_effector_name)
+            print(f"Found end effector '{self.cfg.asset.end_effector_name}' at index: {self.ee_idx}")
+        else:
+            # 如果没有配置，使用默认值（向后兼容）
+            print(f"Warning: end_effector_name not configured, using default ee_idx = {self.ee_idx}")
+        
         print("self.body_names: ", body_names)
         print("self.dof_names: ", self.dof_names)
         print("self.termination_contact_indices", self.termination_contact_indices)
         print("self.hip_joints_indices", self.hip_body_indices)
+        print("self.ee_idx", self.ee_idx)
         
         
         # if recording video, set up camera

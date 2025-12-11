@@ -8,6 +8,10 @@ def config_asset(Cnfg: Union[Cfg, Meta]):
 
     Cnfg.asset.file = '{MINI_GYM_ROOT_DIR}/resources/robots/arx5p2Go1/urdf/arx5p2Go1.urdf'
     
+    # 设置末端执行器名称（用于动态查找 ee_idx）
+    # arx5p2Go1 的末端执行器是 zarx_body8（最后一个机械臂 link，索引 31）
+    Cnfg.asset.end_effector_name = "zarx_body8"
+    
     Cnfg.asset.penalize_contacts_on = [
         'base', 'trunk',
         "arm", "wrist", 'zarx',
@@ -89,10 +93,14 @@ def config_asset(Cnfg: Union[Cfg, Meta]):
         
     }
 
-def config_go2_airbot(Cnfg: Union[Cfg, Meta]):
+def config_go2_airbot_asset(Cnfg: Union[Cfg, Meta]):
     """配置 go2_airbot 机器人（GO2 底盘 + Airbot 机械臂）"""
     
     Cnfg.asset.file = '{MINI_GYM_ROOT_DIR}/resources/robots/go2_airbot/urdf/go2_airbot.urdf'
+    
+    # 设置末端执行器名称（用于动态查找 ee_idx）
+    # go2_airbot 的末端执行器是 gripper_link（索引 35）
+    Cnfg.asset.end_effector_name = "gripper_link"
     
     Cnfg.asset.penalize_contacts_on = [
         'base',
@@ -105,26 +113,31 @@ def config_go2_airbot(Cnfg: Union[Cfg, Meta]):
     
     Cnfg.asset.hip_joints = {'hip'}
     
-    Cnfg.control.stiffness = {'joint': 35., "arm": 5., "arm_joint": 5.}  # [N*m/rad]
+    Cnfg.control.stiffness = {'joint': 35., "arm": 5.}  # [N*m/rad]
     
     # Airbot 机械臂的刚度和阻尼配置
+    # 包含所有可能的匹配键，确保 _process_dof_props 能够正确匹配
     Cnfg.arm.control.stiffness_arm = {
+            # 通用匹配键
             "arm": 50,
-            "arm_joint00": 40,
-            "arm_joint01": 50,
-            "arm_joint02": 50,
-            "arm_joint03": 30,
-            "arm_joint04": 30,
-            "arm_joint05": 30,
+            # 具体关节名称（go2_airbot）
+            "arm_j0": 40,
+            "arm_j1": 50,
+            "arm_j2": 50,
+            "arm_j3": 30,
+            "arm_j4": 30,
+            "arm_j5": 30,
     }  # [N*m/rad]
     Cnfg.arm.control.damping_arm = {
+            # 通用匹配键
             "arm": 20,
-            "arm_joint00": 3,
-            "arm_joint01": 10,
-            "arm_joint02": 10,
-            "arm_joint03": 5,
-            "arm_joint04": 5,
-            "arm_joint05": 5,
+            # 具体关节名称（go2_airbot）
+            "arm_j0": 3,
+            "arm_j1": 10,
+            "arm_j2": 10,
+            "arm_j3": 5,
+            "arm_j4": 5,
+            "arm_j5": 5,
     }  # [N*m*s/rad]
 
     Cnfg.dog.control.stiffness_leg = {'joint': 35.}  # [N*m/rad]
@@ -150,11 +163,11 @@ def config_go2_airbot(Cnfg: Union[Cfg, Meta]):
         'RR_calf_joint': -1.5,  # [rad]
         
         # Airbot 机械臂部分
-        "arm_joint00": 0.0,
-        "arm_joint01": 0.8,
-        "arm_joint02": 0.8,
-        "arm_joint03": 0.0,
-        "arm_joint04": 0.0,
-        "arm_joint05": 0.0,
+        "arm_j0": 0.0,
+        "arm_j1": 0.8,
+        "arm_j2": 0.8,
+        "arm_j3": 0.0,
+        "arm_j4": 0.0,
+        "arm_j5": 0.0,
         
     }

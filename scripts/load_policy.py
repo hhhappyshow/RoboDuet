@@ -102,6 +102,10 @@ def load_env(logdir, wrapper, headless=False, device='cuda:0'):
                     for key2, value2 in value.items():
                         setattr(getattr(Cfg, key), key2, value2)
 
+    # 设置默认值，避免访问不存在的属性
+    if not hasattr(Cfg, 'use_rot6d'):
+        Cfg.use_rot6d = False
+    
     Cfg.terrain.mesh_type = "plane"
     if Cfg.terrain.mesh_type == "plane":
       Cfg.terrain.teleport_robots = False

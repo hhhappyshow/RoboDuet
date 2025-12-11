@@ -74,13 +74,29 @@ class Rewards:
 
     def _reward_arm_action_smoothness_1(self):
         # Penalize changes in actions
-        diff = torch.square(self.env.joint_pos_target[:, self.env.num_actions_loco:-2] - self.env.last_joint_pos_target[:, self.env.num_actions_loco:-2])
+        # diff = torch.square(self.env.joint_pos_target[:, self.env.num_actions_loco:-2] - self.env.last_joint_pos_target[:, self.env.num_actions_loco:-2])
+        # diff = diff * (self.env.last_actions[:, self.env.num_actions_loco:] != 0)  # ignore first step
+        # print(self.env.num_dofs)
+        # assert False
+        # return torch.sum(diff, dim=1)
+        # 排除最后两个机械臂关节（通常是夹爪关节）
+        # 确保 last_actions 的切片与 joint_pos_target 的切片匹配
+        arm_slice = slice(self.env.num_actions_loco, -2 if self.env.num_dofs > 18 else None)
+        # print(arm_slice)
+        diff = torch.square(self.env.joint_pos_target[:, arm_slice] - self.env.last_joint_pos_target[:, arm_slice])
         diff = diff * (self.env.last_actions[:, self.env.num_actions_loco:] != 0)  # ignore first step
         return torch.sum(diff, dim=1)
 
     def _reward_arm_action_smoothness_2(self):
         # Penalize changes in actions
-        diff = torch.square(self.env.joint_pos_target[:, self.env.num_actions_loco:-2] - 2 * self.env.last_joint_pos_target[:, self.env.num_actions_loco:-2] + self.env.last_last_joint_pos_target[:, self.env.num_actions_loco:-2])
+        # diff = torch.square(self.env.joint_pos_target[:, self.env.num_actions_loco:-2] - 2 * self.env.last_joint_pos_target[:, self.env.num_actions_loco:-2] + self.env.last_last_joint_pos_target[:, self.env.num_actions_loco:-2])
+        # diff = diff * (self.env.last_actions[:, self.env.num_actions_loco:] != 0)  # ignore first step
+        # diff = diff * (self.env.last_last_actions[:, self.env.num_actions_loco:] != 0)  # ignore second step
+        # return torch.sum(diff, dim=1)
+        # 排除最后两个机械臂关节（通常是夹爪关节）
+        # 确保所有切片的维度匹配
+        arm_slice = slice(self.env.num_actions_loco, -2 if self.env.num_dofs > 18 else None)
+        diff = torch.square(self.env.joint_pos_target[:, arm_slice] - 2 * self.env.last_joint_pos_target[:, arm_slice] + self.env.last_last_joint_pos_target[:, arm_slice])
         diff = diff * (self.env.last_actions[:, self.env.num_actions_loco:] != 0)  # ignore first step
         diff = diff * (self.env.last_last_actions[:, self.env.num_actions_loco:] != 0)  # ignore second step
         return torch.sum(diff, dim=1)

@@ -5,7 +5,6 @@ import torch
 
 class Cfg(PrefixProto, cli=False):
     
-    use_rot6d = False   # 新增：默认不使用 rot6d 姿态表示，由训练脚本/加载脚本覆盖
     class hybrid(PrefixProto, cli=False):
         num_actions = 18
         plan_vel = False
@@ -304,6 +303,7 @@ class Cfg(PrefixProto, cli=False):
     class asset(PrefixProto, cli=False):
         file = ""
         foot_name = "None"  # name of the feet bodies, used to index body state and contact force tensors
+        end_effector_name = ""  # name of the end effector body, used to index end effector state
         penalize_contacts_on = []
         terminate_after_contacts_on = []
         disable_gravity = False
